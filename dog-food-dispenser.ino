@@ -1,13 +1,16 @@
 #include "dispenser_lib/dispenser.hpp"
 
-// food_dispenser dispenser;
+#define LED_PIN 2
 
 void setup()
 {
-    // dispenser.init();
+    pinMode(LED_PIN, OUTPUT);
 }
 
 void loop()
 {
-    // dispenser.run();
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(LED_PIN, LOW);
+    delay(500);
 }

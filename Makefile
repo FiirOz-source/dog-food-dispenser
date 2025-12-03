@@ -1,18 +1,23 @@
 PROJECT_NAME := dog-food-dispenser
 BUILD_DIR    := build
 
+# Port → à modifier selon OS
+# Mac/Linux : /dev/cu.usbserial-0001
+# Windows : COM3, COM4, etc.
 PORT         := /dev/cu.usbserial-0001
 
 BOARD_FQBN   := esp8266:esp8266:generic
 BAUD         := 115200
 ARDUINO_CLI  := arduino-cli
 
+OS := $(shell uname 2>/dev/null || echo Windows)
+
 all: compile
 
 core:
-	@echo "Mise à jour du core ESP32..."
+	@echo "Mise à jour du core ESP8266..."
 	$(ARDUINO_CLI) core update-index
-	$(ARDUINO_CLI) core install esp32:esp32
+	$(ARDUINO_CLI) core install esp8266:esp8266
 
 compile: core
 	@echo "Compilation → $(BUILD_DIR)/"
@@ -29,12 +34,16 @@ run: upload
 	$(ARDUINO_CLI) monitor -p "$(PORT)" --config baudrate=$(BAUD)
 
 clean:
+ifeq ($(OS),Windows)
+	rmdir /s /q $(BUILD_DIR)
+else
 	rm -rf $(BUILD_DIR)
+endif
 
 rebuild: clean compile
 
 port:
 	@echo "Port utilisé → $(PORT)"
-	@arduino-cli board list | grep -B1 -A1 ESP32 || echo "Aucune carte détectée pour l'instant"
+	@arduino-cli board list || echo "Aucune carte détectée pour l'instant"
 
 .PHONY: all core compile upload run clean rebuild port

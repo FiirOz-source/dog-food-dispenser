@@ -10,6 +10,8 @@ BOARD_FQBN   := esp8266:esp8266:generic
 BAUD         := 115200
 ARDUINO_CLI  := arduino-cli
 
+LIB_DIR      := $(abspath libraries)
+
 OS := $(shell uname 2>/dev/null || echo Windows)
 
 all: compile
@@ -23,6 +25,7 @@ compile: core
 	@echo "Compilation → $(BUILD_DIR)/"
 	$(ARDUINO_CLI) compile --fqbn $(BOARD_FQBN) \
 		--build-path "$(abspath $(BUILD_DIR))" \
+		--libraries "$(LIB_DIR)" \
 		--warnings all \
 		./
 
@@ -44,6 +47,6 @@ rebuild: clean compile
 
 port:
 	@echo "Port utilisé → $(PORT)"
-	@arduino-cli board list || echo "Aucune carte détectée pour l'instant"
+	@$(ARDUINO_CLI) board list || echo "Aucune carte détectée pour l'instant"
 
 .PHONY: all core compile upload run clean rebuild port

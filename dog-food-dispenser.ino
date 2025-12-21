@@ -3,14 +3,17 @@
 
 static const uint8_t SDA_PIN = 4; // D2 sur NodeMCU
 static const uint8_t SCL_PIN = 5; // D1 sur NodeMCU
+static const uint8_t SERVO_PIN = 14;
 
 // food_dispenser dispenser;
-dispenser_lib::actuators::lcd_screen lcd_screen(SDA_PIN, SCL_PIN, 100000, 16, 2);
+dispenser_lib::actuators::lcd_screen lcd_screen(SDA_PIN, SCL_PIN);
+dispenser_lib::actuators::servo_motor servo_motor(SERVO_PIN);
 
 void setup()
 {
     // dispenser.init();
     lcd_screen.init_actuator();
+    servo_motor.init_actuator();
 
     lcd_screen.display_message("Dog Feeder", 0, 0);
 
@@ -33,4 +36,6 @@ void setup()
 void loop()
 {
     // dispenser.run();
+    servo_motor.toggle_position();
+    delay(1000);
 }

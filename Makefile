@@ -1,48 +1,54 @@
-# Makefile parfait pour ton arborescence actuelle
 PROJECT_NAME := dog-food-dispenser
 BUILD_DIR    := build
 
-# Change selon ton OS
-PORT         ?= /dev/cu.usbserial-*   # macOS (le plus souvent)
-# PORT       ?= /dev/ttyUSB0          # Linux
-# PORT       ?= COM3                  # Windows
+# Port → à modifier selon OS
+# Mac/Linux : /dev/cu.usbserial-0001
+# Windows : COM3, COM4, etc.
+PORT         := /dev/cu.usbserial-0001
 
-BOARD_FQBN   := esp32:esp32:esp32     # 99% des ESP32 Dev Module
-# BOARD_FQBN := esp32:esp32:esp32s3:USBCDC=1   # si tu as un S3
-
+BOARD_FQBN   := esp8266:esp8266:generic
 BAUD         := 115200
 ARDUINO_CLI  := arduino-cli
 
+LIB_DIR      := $(abspath libraries)
+DISP_LIB_DIR := $(abspath dispenser_lib)
+
+OS := $(shell uname 2>/dev/null || echo Windows)
+
 all: compile
 
-# Première fois ou quand tu ajoutes une lib
 core:
-	@echo "Mise à jour du core ESP32..."
+	@echo "Mise à jour du core ESP8266..."
 	$(ARDUINO_CLI) core update-index
-	$(ARDUINO_CLI) core install esp32:esp32
+	$(ARDUINO_CLI) core install esp8266:esp8266
 
-# Compilation
 compile: core
-	@echo "Compilation $(PROJECT_NAME) → $(BUILD_DIR)/"
+	@echo "Compilation → $(BUILD_DIR)/"
 	$(ARDUINO_CLI) compile --fqbn $(BOARD_FQBN) \
-		--build-path $(BUILD_DIR) \
+		--build-path "$(abspath $(BUILD_DIR))" \
+		--libraries "$(LIB_DIR)" \
+		--libraries "$(DISP_LIB_DIR)" \
 		--warnings all \
-		--build-cache-path $(BUILD_DIR)/cache \
 		./
 
-# Flash
 upload: compile
 	@echo "Upload sur $(PORT)..."
-	$(ARDUINO_CLI) upload -p $(PORT) --fqbn $(BOARD_FQBN) ./
+	$(ARDUINO_CLI) upload -p "$(PORT)" --fqbn $(BOARD_FQBN) --input-dir "$(BUILD_DIR)" ./
 
-# Flash + moniteur (la commande que tu vas taper 50 fois par jour)
 run: upload
-	$(ARDUINO_CLI) monitor -p $(PORT) --baud $(BAUD)
+	$(ARDUINO_CLI) monitor -p "$(PORT)" --config baudrate=$(BAUD)
 
-# Nettoyage
 clean:
+ifeq ($(OS),Windows)
+	rmdir /s /q $(BUILD_DIR)
+else
 	rm -rf $(BUILD_DIR)
+endif
 
 rebuild: clean compile
 
-.PHONY: all core compile upload run clean rebuild
+port:
+	@echo "Port utilisé → $(PORT)"
+	@$(ARDUINO_CLI) board list || echo "Aucune carte détectée pour l'instant"
+
+.PHONY: all core compile upload run clean rebuild port

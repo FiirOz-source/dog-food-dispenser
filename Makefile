@@ -2,11 +2,13 @@ PROJECT_NAME := dog-food-dispenser
 BUILD_DIR    := build
 
 # Port → à modifier selon OS
-# Mac/Linux : /dev/cu.usbserial-0001
+# Mac/Linux : /dev/cu.usbserial-0001 
 # Windows : COM3, COM4, etc.
 PORT         := /dev/cu.usbserial-0001
 
-BOARD_FQBN   := esp8266:esp8266:generic
+UPLOAD_BAUD  := 921600
+BOARD_FQBN   := esp8266:esp8266:nodemcuv2:baud=$(UPLOAD_BAUD)
+
 BAUD         := 115200
 ARDUINO_CLI  := arduino-cli
 
@@ -32,7 +34,7 @@ compile: core
 		./
 
 upload: compile
-	@echo "Upload sur $(PORT)..."
+	@echo "Upload sur $(PORT) (upload baud=$(UPLOAD_BAUD))..."
 	$(ARDUINO_CLI) upload -p "$(PORT)" --fqbn $(BOARD_FQBN) --input-dir "$(BUILD_DIR)" ./
 
 run: upload

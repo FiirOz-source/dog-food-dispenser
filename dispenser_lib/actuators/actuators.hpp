@@ -24,6 +24,16 @@ namespace dispenser_lib
             virtual void init_actuator();
         };
 
+        class digital_actuator : public actuator
+        {
+        public:
+            digital_actuator() = default;
+            ~digital_actuator() = default;
+
+        protected:
+            int ctrl_pin;
+        };
+
         class i2c_actuator : public actuator
         {
         public:

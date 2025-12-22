@@ -60,6 +60,16 @@ namespace dispenser_lib
             Ultrasonic ultrasonic;
         };
 
+        class infrared_sensor : public digital_sensor
+        {
+        public:
+            infrared_sensor() = default;
+            infrared_sensor(int pin);
+            ~infrared_sensor() = default;
+            bool get_state();
+            void init_sensor() override;
+        };
+
     } // namespace sensors
 } // namespace dispenser_lib
 #endif // SENSORS_HPP

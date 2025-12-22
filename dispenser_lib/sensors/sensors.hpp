@@ -9,6 +9,8 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <Ultrasonic.h>
+#include <SoftwareSerial.h>
 
 namespace dispenser_lib
 {
@@ -19,16 +21,16 @@ namespace dispenser_lib
         public:
             sensor() = default;
             ~sensor() = default;
-            virtual void read_sensor();
+            virtual void init_sensor();
         };
 
         class serial_sensor : public sensor
         {
         public:
             serial_sensor() = default;
+            serial_sensor(int rx_pin, int tx_pin, unsigned long baud_rate);
             ~serial_sensor() = default;
-            void init_sensor(int rx_pin, int tx_pin, unsigned long baud_rate);
-            void read_sensor() override;
+            void init_sensor() override;
 
         private:
             SoftwareSerial *serial_port;
@@ -40,10 +42,8 @@ namespace dispenser_lib
         public:
             digital_sensor() = default;
             ~digital_sensor() = default;
-            void init_sensor(int pin);
-            void read_sensor() override;
 
-        private:
+        protected:
             int sensor_pin;
         };
 
@@ -51,8 +51,13 @@ namespace dispenser_lib
         {
         public:
             ultrasonic_sensor() = default;
+            ultrasonic_sensor(int pin);
             ~ultrasonic_sensor() = default;
-            long get_distance(uint32_t timeout);
+            long get_distance();
+            void init_sensor() override;
+
+        private:
+            Ultrasonic ultrasonic;
         };
 
     } // namespace sensors

@@ -36,6 +36,11 @@ void dispenser_lib::actuators::lcd_screen::display_message(const char *message, 
     lcd.print(message);
 }
 
+void dispenser_lib::actuators::lcd_screen::clear()
+{
+    lcd.clear();
+}
+
 /* Servo Motor */
 dispenser_lib::actuators::servo_motor::servo_motor(int ctrl_pin, int closed_angle, int opened_angle)
 {

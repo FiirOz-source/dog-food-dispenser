@@ -7,14 +7,15 @@ static const uint8_t SDA_PIN = 4;
 static const uint8_t SCL_PIN = 5;
 static const uint8_t SERVO_PIN = 14;             // D5 on NODEMCU
 static const uint8_t ULTRASONIC_SENSOR_PIN = 12; // D6 on NODEMCU
-const uint8_t IR_PIN = 13;                       // D7 on NODEMCU
+static const uint8_t IR_PIN = 13;                // D7 on NODEMCU
+static const uint8_t RFID_RX_PIN = 15;           // D8 on NODEMCU
 
 // food_dispenser dispenser;
 dispenser_lib::actuators::lcd_screen lcd_screen(SDA_PIN, SCL_PIN);
 dispenser_lib::actuators::servo_motor servo_motor(SERVO_PIN);
 dispenser_lib::sensors::ultrasonic_sensor ultrasonic_sensor(ULTRASONIC_SENSOR_PIN);
 dispenser_lib::sensors::infrared_sensor infrared_sensor(IR_PIN);
-
+dispenser_lib::sensors::rfid_sensor rfid_sensor(RFID_RX_PIN, -1, 9600); // RX, TX, Baudrate
 void setup()
 {
     // dispenser.init();
@@ -51,9 +52,10 @@ void setup()
     infrared_sensor.init_sensor();
     snprintf(buf, sizeof(buf), "Init %d%%", init);
     lcd_screen.display_message(buf, 1, 0);
+
+    rfid_sensor.init_sensor();
     init = 100;
     delay(500);
-
     snprintf(buf, sizeof(buf), "Init %d%%", init);
     lcd_screen.display_message(buf, 1, 0);
     delay(500);
@@ -73,4 +75,13 @@ void loop()
         lcd_screen.display_message(buf, 1, 0);
     }
     previous_state = current_state;
+
+    String rfid_tag = rfid_sensor.read_rfid(100);
+    if (rfid_tag.length() > 0)
+    {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "RFID: %s", rfid_tag.c_str());
+        lcd_screen.display_message("                ", 0, 0);
+        lcd_screen.display_message(buf, 0, 0);
+    }
 }

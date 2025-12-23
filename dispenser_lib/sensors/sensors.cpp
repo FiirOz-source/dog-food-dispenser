@@ -41,34 +41,87 @@ bool dispenser_lib::sensors::infrared_sensor::get_state()
     return digitalRead(sensor_pin);
 }
 
-
 /* RFID sensor */
-dispenser_lib::sensors::rfid_sensor::rfid_sensor(int rx_pin, int tx_pin, unsigned long baud_rate)
+void dispenser_lib::sensors::rfid_sensor::init_sensor()
 {
-    SoftwareSerial rfid(rx_pin, tx_pin);
-    rfid.begin(baud_rate);
+    serial_port.begin(baud_rate);
 }
 
-void dispenser_lib::sensors::rfid_sensor::rfid_sensor()
+String dispenser_lib::sensors::rfid_sensor::read_rfid(uint32_t timeout_ms)
 {
-    rfid_sensor(13,-1,9600)
-}
+    const uint32_t start = millis();
 
-std::vector<char> dispenser_lib::sensors::rfid_sensor::read_sensor()
-{
-    std::vector<char> tableau() //tableau vide
-    tableau.push_back('\n')
-    if (rfid.available())
+    // Wait STX (0x02)
+    while (millis() - start < timeout_ms)
     {
-        char c = rfid.read();
-        if (c != ' ') {
-            tableau.clear()
-            tableau.push_back(c)
-            while(c != '\n'){
-                c = rfid.read();
-                tableau.push_back(c)
+        while (serial_port.available() > 0)
+        {
+            uint8_t b = (uint8_t)serial_port.read();
+            if (b != 0x02)
+            {
+                continue; // if not STX, keep waiting}
             }
+            char tag[9];
+            tag[8] = '\0';
+
+            for (int i = 0; i < 2; i++)
+            {
+                while (serial_port.available() == 0)
+                {
+                    if (millis() - start >= timeout_ms)
+                    {
+                        return "";
+                    }
+                    yield();
+                }
+                serial_port.read();
+            }
+
+            for (int i = 0; i < 8; i++)
+            {
+                while (serial_port.available() == 0)
+                {
+                    if (millis() - start >= timeout_ms)
+                    {
+                        return "";
+                    }
+                    yield();
+                }
+                tag[i] = (char)serial_port.read();
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                while (serial_port.available() == 0)
+                {
+                    if (millis() - start >= timeout_ms)
+                    {
+                        return "";
+                    }
+                    yield();
+                }
+                serial_port.read();
+            }
+
+            // wait ETX (0x03)
+            while (serial_port.available() == 0)
+            {
+                if (millis() - start >= timeout_ms)
+                {
+                    return "";
+                }
+                yield();
+            }
+            uint8_t etx = (uint8_t)serial_port.read();
+            if (etx != 0x03)
+            {
+                return "";
+            }
+
+            return String(tag);
         }
+        yield();
     }
-    return tableau ;
+
+    return "";
 }

@@ -28,14 +28,24 @@ namespace dispenser_lib
         class serial_sensor : public sensor
         {
         public:
-            serial_sensor() = default;
-            serial_sensor(int rx_pin, int tx_pin, unsigned long baud_rate);
-            ~serial_sensor() = default;
-            void init_sensor() override;
+            serial_sensor()
+                : serial_port(13, -1), baud_rate(9600), rx_pin(13), tx_pin(-1) {}
 
-        private:
-            SoftwareSerial *serial_port;
-            unsigned long baud_rate_;
+            serial_sensor(int rx, int tx, unsigned long baud)
+                : serial_port(rx, tx), baud_rate(baud), rx_pin(rx), tx_pin(tx) {}
+
+            ~serial_sensor() = default;
+
+            void init_sensor() override
+            {
+                serial_port.begin(baud_rate);
+            }
+
+        protected:
+            SoftwareSerial serial_port;
+            unsigned long baud_rate;
+            int rx_pin;
+            int tx_pin;
         };
 
         class digital_sensor : public sensor
@@ -75,10 +85,15 @@ namespace dispenser_lib
         {
         public:
             rfid_sensor() = default;
-            rfid_sensor(int rx_pin, int tx_pin, unsigned long baud_rate);
+            rfid_sensor(int rx, int tx, unsigned long baud)
+                : serial_sensor(rx, tx, baud) {}
             ~rfid_sensor() = default;
-            std::vector<char> read_sensor();
             void init_sensor() override;
+            String read_rfid(uint32_t timeout_ms = 80);
+
+        private:
+            std::vector<char> frame;
+            bool in_frame = false;
         };
 
     } // namespace sensors

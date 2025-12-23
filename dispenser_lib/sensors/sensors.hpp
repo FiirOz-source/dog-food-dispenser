@@ -11,6 +11,7 @@
 #include <Wire.h>
 #include <Ultrasonic.h>
 #include <SoftwareSerial.h>
+#include <vector>
 
 namespace dispenser_lib
 {
@@ -67,6 +68,16 @@ namespace dispenser_lib
             infrared_sensor(int pin);
             ~infrared_sensor() = default;
             bool get_state();
+            void init_sensor() override;
+        };
+
+        class rfid_sensor : public serial_sensor
+        {
+        public:
+            rfid_sensor() = default;
+            rfid_sensor(int rx_pin, int tx_pin, unsigned long baud_rate);
+            ~rfid_sensor() = default;
+            std::vector<char> read_sensor();
             void init_sensor() override;
         };
 

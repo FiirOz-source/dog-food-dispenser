@@ -55,6 +55,7 @@ namespace dispenser_lib
             ~lcd_screen() = default;
             virtual void init_actuator();
             void display_message(const char *message, int row, int column);
+            void clear();
 
         private:
             rgb_lcd lcd;

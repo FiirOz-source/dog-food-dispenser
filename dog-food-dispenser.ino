@@ -1,15 +1,23 @@
-#include <iostream>
 #include <actuators.hpp>
 #include <sensors.hpp>
 #include <dogs.hpp>
 #include <Arduino.h>
 
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include <LittleFS.h>
+
+const char *ssid = "iPhone de Timothée";
+const char *password = "TimAuThe";
+
+ESP8266WebServer server(80);
+
 static const uint8_t SDA_PIN = 4;
 static const uint8_t SCL_PIN = 5;
-static const uint8_t SERVO_PIN = 14;             // D5 on NODEMCU
-static const uint8_t ULTRASONIC_SENSOR_PIN = 12; // D6 on NODEMCU
-static const uint8_t IR_PIN = 13;                // D7 on NODEMCU
-static const uint8_t RFID_RX_PIN = 15;           // D8 on NODEMCU
+static const uint8_t SERVO_PIN = 14;
+static const uint8_t ULTRASONIC_SENSOR_PIN = 12;
+static const uint8_t IR_PIN = 13;
+static const uint8_t RFID_RX_PIN = 15;
 
 dispenser_lib::dogs::dog Jop("Jop", "0080D552");
 dispenser_lib::dogs::dog Manouk("Manouk", "002E2989");
@@ -18,14 +26,22 @@ dispenser_lib::actuators::lcd_screen lcd_screen(SDA_PIN, SCL_PIN);
 dispenser_lib::actuators::servo_motor servo_motor(SERVO_PIN);
 dispenser_lib::sensors::ultrasonic_sensor ultrasonic_sensor(ULTRASONIC_SENSOR_PIN);
 dispenser_lib::sensors::infrared_sensor infrared_sensor(IR_PIN);
-dispenser_lib::sensors::rfid_sensor rfid_sensor(RFID_RX_PIN, -1, 9600); // RX, TX, Baudrate
+dispenser_lib::sensors::rfid_sensor rfid_sensor(RFID_RX_PIN, -1, 9600);
 
 volatile bool ir_event = false;
 volatile uint32_t last_isr_us = 0;
+static const uint32_t IR_DEBOUNCE_US = 200000;
 
-static const uint32_t IR_DEBOUNCE_US = 200000; // 200 ms
+String last_event = "Boot";
+String last_rfid = "";
+long last_distance_cm = -1;
 
-void ICACHE_RAM_ATTR on_IR_falling()
+uint32_t jop_last_fed_ms = 0;
+uint32_t manouk_last_fed_ms = 0;
+
+static const long FOOD_EMPTY_THRESHOLD_CM = 100;
+
+void IRAM_ATTR on_IR_falling()
 {
     uint32_t now = micros();
     if (now - last_isr_us < IR_DEBOUNCE_US)
@@ -34,23 +50,67 @@ void ICACHE_RAM_ATTR on_IR_falling()
     ir_event = true;
 }
 
+String elapsed_to_human(uint32_t since_ms)
+{
+    if (since_ms == 0)
+        return "Jamais";
+
+    uint32_t sec = since_ms / 1000;
+    if (sec < 60)
+        return "Il y a " + String(sec) + " s";
+
+    uint32_t min = sec / 60;
+    if (min < 60)
+        return "Il y a " + String(min) + " min";
+
+    uint32_t h = min / 60;
+    if (h < 24)
+        return "Il y a " + String(h) + " h";
+
+    uint32_t d = h / 24;
+    return "Il y a " + String(d) + " j";
+}
+
+int food_percent_from_distance(long cm)
+{
+    const int full_cm = 10;
+    const int empty_cm = 100;
+
+    if (cm < 0)
+        return -1;
+    if (cm <= full_cm)
+        return 100;
+    if (cm >= empty_cm)
+        return 0;
+
+    float pct = 100.0f * (float)(empty_cm - cm) / (float)(empty_cm - full_cm);
+    if (pct < 0)
+        pct = 0;
+    if (pct > 100)
+        pct = 100;
+    return (int)(pct + 0.5f);
+}
+
 void show_waiting_screen()
 {
     lcd_screen.clear();
     lcd_screen.display_message("Dog Feeder", 0, 0);
     lcd_screen.display_message("Waiting for dog", 1, 0);
+    last_event = "Waiting for dog";
 }
 
-void handleDogDetected()
+void handle_dog_detected()
 {
-    long distance = ultrasonic_sensor.get_distance();
+    last_event = "Dog detected";
+    last_distance_cm = ultrasonic_sensor.get_distance();
 
-    if (distance < 100)
+    if (last_distance_cm < FOOD_EMPTY_THRESHOLD_CM)
     {
-        String rfid_tag = rfid_sensor.read_rfid(100);
+        last_event = "Reading RFID";
+        last_rfid = rfid_sensor.read_rfid(100);
 
-        bool jop_matched = Jop.matches_tag(rfid_tag);
-        bool manouk_matched = Manouk.matches_tag(rfid_tag);
+        bool jop_matched = Jop.matches_tag(last_rfid);
+        bool manouk_matched = Manouk.matches_tag(last_rfid);
 
         if (jop_matched || manouk_matched)
         {
@@ -59,6 +119,9 @@ void handleDogDetected()
                 if (Jop.can_feed())
                 {
                     Jop.mark_fed();
+                    jop_last_fed_ms = millis();
+                    last_event = "Feeding Jop";
+
                     lcd_screen.clear();
                     lcd_screen.display_message("Feeding Jop!", 0, 0);
                     servo_motor.open();
@@ -67,6 +130,8 @@ void handleDogDetected()
                 }
                 else
                 {
+                    last_event = "Jop already fed";
+
                     lcd_screen.clear();
                     lcd_screen.display_message("Jop already fed", 0, 0);
                     String since = Jop.since_fed();
@@ -79,6 +144,9 @@ void handleDogDetected()
                 if (Manouk.can_feed())
                 {
                     Manouk.mark_fed();
+                    manouk_last_fed_ms = millis();
+                    last_event = "Feeding Manouk";
+
                     lcd_screen.clear();
                     lcd_screen.display_message("Feeding Manouk!", 0, 0);
                     servo_motor.open();
@@ -87,6 +155,8 @@ void handleDogDetected()
                 }
                 else
                 {
+                    last_event = "Manouk already fed";
+
                     lcd_screen.clear();
                     lcd_screen.display_message("Manouk alrdy fed", 0, 0);
                     String since = Manouk.since_fed();
@@ -97,19 +167,26 @@ void handleDogDetected()
         }
         else
         {
-            if (rfid_tag != "")
+            if (last_rfid != "")
             {
+                last_event = "Unknown dog";
+
                 lcd_screen.clear();
                 lcd_screen.display_message("Unknown dog...", 0, 0);
                 char buf[32];
-                snprintf(buf, sizeof(buf), "Tag: %s", rfid_tag.c_str());
+                snprintf(buf, sizeof(buf), "Tag: %s", last_rfid.c_str());
                 lcd_screen.display_message(buf, 1, 0);
                 delay(2000);
+            }
+            else
+            {
+                last_event = "RFID empty";
             }
         }
     }
     else
     {
+        last_event = "No more food";
         lcd_screen.clear();
         lcd_screen.display_message("No more food ...", 0, 0);
         delay(500);
@@ -123,6 +200,7 @@ void setup()
 
     lcd_screen.init_actuator();
     lcd_screen.display_message("Dog Feeder", 0, 0);
+
     static int init = 0;
     char buf[32];
 
@@ -165,14 +243,62 @@ void setup()
 
     pinMode(IR_PIN, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(IR_PIN), on_IR_falling, FALLING);
-    delay(500);
+
     show_waiting_screen();
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    Serial.print("Connexion WiFi");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(300);
+        Serial.print(".");
+    }
+    Serial.println("\nConnecté !");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
+
+    if (!LittleFS.begin())
+    {
+        Serial.println("Erreur LittleFS !");
+        return;
+    }
+
+    server.serveStatic("/", LittleFS, "/index.html");
+
+    server.on("/status", HTTP_GET, []()
+              {
+    long dist = last_distance_cm;
+    int pct = food_percent_from_distance(dist);
+
+    uint32_t now = millis();
+    String jop_h = elapsed_to_human(jop_last_fed_ms ? (now - jop_last_fed_ms) : 0);
+    String man_h = elapsed_to_human(manouk_last_fed_ms ? (now - manouk_last_fed_ms) : 0);
+
+    String json = "{";
+    json += "\"event\":\"" + last_event + "\",";
+    json += "\"distance_cm\":" + String(dist) + ",";
+    json += "\"food_percent\":" + String(pct) + ",";
+    json += "\"last_rfid\":\"" + last_rfid + "\",";
+    json += "\"jop_last_fed\":\"" + jop_h + "\",";
+    json += "\"manouk_last_fed\":\"" + man_h + "\"";
+    json += "}";
+
+    server.send(200, "application/json; charset=utf-8", json); });
+
+    server.onNotFound([]()
+                      { server.send(404, "text/plain; charset=utf-8", "404 - introuvable"); });
+
+    server.begin();
+    Serial.println("Serveur OK.");
 }
 
 void loop()
 {
     static bool busy = false;
     static bool waiting_msg = false;
+
+    server.handleClient();
 
     if (!waiting_msg && !busy)
     {
@@ -188,9 +314,7 @@ void loop()
 
         busy = true;
         waiting_msg = false;
-
-        handleDogDetected();
-
+        handle_dog_detected();
         busy = false;
     }
 

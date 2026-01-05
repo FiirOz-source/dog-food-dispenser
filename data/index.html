@@ -2,169 +2,265 @@
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dog Food Dispenser</title>
     <style>
+        :root {
+            --primary: #4a90e2;
+            --primary2: #357abd;
+            --bg: #0b1220;
+            --card: rgba(255, 255, 255, .95);
+            --muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
             margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 24px;
+            font-family: Arial, sans-serif;
             min-height: 100vh;
-            background-image: url('https://source.unsplash.com/random/1920x1080/?dog,paw');
-            background-size: cover;
-            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(1200px 700px at 10% 10%, rgba(74, 144, 226, .35), transparent 60%),
+                radial-gradient(900px 600px at 90% 20%, rgba(34, 197, 94, .20), transparent 55%),
+                radial-gradient(900px 600px at 40% 90%, rgba(245, 158, 11, .18), transparent 55%),
+                var(--bg);
         }
 
         .container {
-            background-color: rgba(255, 255, 255, 0.95);
+            background: var(--card);
             border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            padding: 40px;
-            max-width: 600px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, .2);
+            padding: 32px;
+            max-width: 650px;
             width: 100%;
             text-align: center;
-            animation: fadeIn 1s ease-in-out;
+            animation: fadeIn .5s ease-out;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-20px);
+                transform: translateY(-10px)
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0)
             }
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 30px;
-            color: #4a90e2;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            font-size: 2.2em;
+            margin: 0 0 18px;
+            color: var(--primary);
         }
 
-        .info-section {
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f59e0b;
+        }
+
+        .dot.ok {
+            background: #16a34a;
+        }
+
+        .dot.bad {
+            background: #ef4444;
+        }
+
+        .grid {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-bottom: 40px;
+            gap: 16px;
+            margin-top: 10px;
         }
 
         .info-item {
-            background-color: #fff;
+            background: #fff;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .info-item:hover {
-            transform: translateY(-5px);
+            padding: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+            text-align: left;
         }
 
         .info-item h2 {
-            font-size: 1.2em;
-            margin-bottom: 10px;
+            font-size: 1.05em;
+            margin: 0 0 6px;
             color: #666;
+            font-weight: 600;
         }
 
         .info-item p {
-            font-size: 1.5em;
+            font-size: 1.35em;
             margin: 0;
-            color: #333;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .sub {
+            font-size: .95em;
+            color: var(--muted);
+            font-weight: 500;
+            margin-top: 6px;
         }
 
         .dog-section {
             display: flex;
-            justify-content: space-between;
-            gap: 20px;
+            gap: 16px;
         }
 
         .dog-item {
             flex: 1;
-            background-color: #fff;
+            background: #fff;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .dog-item:hover {
-            transform: translateY(-5px);
+            padding: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+            text-align: left;
         }
 
         .dog-item h3 {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            color: #4a90e2;
+            margin: 0 0 8px;
+            color: var(--primary);
         }
 
         .dog-item p {
-            font-size: 1em;
-            color: #666;
+            margin: 0;
+            color: #374151;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: .95em;
+            color: #374151;
         }
 
         .dispense-button {
-            background-color: #4a90e2;
+            margin-top: 18px;
+            background: var(--primary);
             color: white;
             border: none;
             border-radius: 50px;
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 14px 22px;
+            font-size: 1.1em;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color .2s ease, transform .2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
         }
 
         .dispense-button:hover {
-            background-color: #357abd;
-            transform: scale(1.05);
+            background: var(--primary2);
+            transform: scale(1.03);
         }
 
         .dispense-button:active {
-            transform: scale(0.98);
+            transform: scale(.98);
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Dog Food Dispenser</h1>
+        <div class="topbar">
+            <h1>Dog Food Dispenser</h1>
+            <div class="pill">
+                <span class="dot" id="dot"></span>
+                <span id="conn">Connexion…</span>
+            </div>
+        </div>
 
-        <div class="info-section">
+        <div class="grid">
             <div class="info-item">
                 <h2>Quantité de croquettes restantes</h2>
-                <p id="remaining-kibble">5 kg</p>
+                <p><span id="remaining-kibble">—</span></p>
+                <div class="sub">Distance ultrason: <span id="distance">—</span> cm</div>
+            </div>
+
+            <div class="info-item">
+                <h2>État</h2>
+                <p id="event">—</p>
+                <div class="sub">Dernier RFID: <span class="mono" id="rfid">—</span></div>
             </div>
 
             <div class="dog-section">
                 <div class="dog-item">
                     <h3>Jop</h3>
-                    <p id="dog1-last-fed">Dernière alimentation : 05/01/2026 à 08:00</p>
+                    <p id="dog1-last-fed">—</p>
                 </div>
-
                 <div class="dog-item">
                     <h3>Manouk</h3>
-                    <p id="dog2-last-fed">Dernière alimentation : 05/01/2026 à 12:00</p>
+                    <p id="dog2-last-fed">—</p>
                 </div>
             </div>
         </div>
 
-        <button class="dispense-button" onclick="dispenseFood()">Distribuer des croquettes</button>
+        <button class="dispense-button" onclick="alert('Optionnel: ajouter un endpoint /dispense')">
+            Distribuer des croquettes
+        </button>
     </div>
 
     <script>
-        function dispenseFood() {
-            alert('Distribution de croquettes déclenchée !');
+        const dot = document.getElementById('dot');
+        const conn = document.getElementById('conn');
+
+        function setConn(ok) {
+            dot.classList.remove('ok', 'bad');
+            dot.classList.add(ok ? 'ok' : 'bad');
+            conn.textContent = ok ? 'En ligne' : 'Hors ligne';
         }
+
+        async function refresh() {
+            try {
+                const r = await fetch('/status', { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const s = await r.json();
+
+                const pct = (typeof s.food_percent === 'number' && s.food_percent >= 0) ? (s.food_percent + ' %') : '—';
+                document.getElementById('remaining-kibble').textContent = pct;
+
+                document.getElementById('distance').textContent = (typeof s.distance_cm === 'number') ? s.distance_cm : '—';
+                document.getElementById('event').textContent = s.event ?? '—';
+                document.getElementById('rfid').textContent = s.last_rfid ?? '—';
+
+                document.getElementById('dog1-last-fed').textContent = "Dernière alimentation : " + (s.jop_last_fed ?? '—');
+                document.getElementById('dog2-last-fed').textContent = "Dernière alimentation : " + (s.manouk_last_fed ?? '—');
+
+                setConn(true);
+            } catch (e) {
+                setConn(false);
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 1000);
     </script>
 </body>
 

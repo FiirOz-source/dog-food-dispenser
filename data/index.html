@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Food Dispenser</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('https://source.unsplash.com/random/1920x1080/?dog,paw');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #4a90e2;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .info-item {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-item h2 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .info-item p {
+            font-size: 1.5em;
+            margin: 0;
+            color: #333;
+        }
+
+        .dog-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .dog-item {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .dog-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .dog-item h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #4a90e2;
+        }
+
+        .dog-item p {
+            font-size: 1em;
+            color: #666;
+        }
+
+        .dispense-button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .dispense-button:hover {
+            background-color: #357abd;
+            transform: scale(1.05);
+        }
+
+        .dispense-button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Dog Food Dispenser</h1>
+
+        <div class="info-section">
+            <div class="info-item">
+                <h2>Quantité de croquettes restantes</h2>
+                <p id="remaining-kibble">5 kg</p>
+            </div>
+
+            <div class="dog-section">
+                <div class="dog-item">
+                    <h3>Jop</h3>
+                    <p id="dog1-last-fed">Dernière alimentation : 05/01/2026 à 08:00</p>
+                </div>
+
+                <div class="dog-item">
+                    <h3>Manouk</h3>
+                    <p id="dog2-last-fed">Dernière alimentation : 05/01/2026 à 12:00</p>
+                </div>
+            </div>
+        </div>
+
+        <button class="dispense-button" onclick="dispenseFood()">Distribuer des croquettes</button>
+    </div>
+
+    <script>
+        function dispenseFood() {
+            alert('Distribution de croquettes déclenchée !');
+        }
+    </script>
+</body>
+
+</html>

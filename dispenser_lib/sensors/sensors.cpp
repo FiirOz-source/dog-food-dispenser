@@ -47,6 +47,20 @@ void dispenser_lib::sensors::rfid_sensor::init_sensor()
     serial_port.begin(baud_rate);
 }
 
+static void drain_input(Stream &s, uint32_t quiet_ms = 20)
+{
+    uint32_t last = millis();
+    while (millis() - last < quiet_ms)
+    {
+        while (s.available() > 0)
+        {
+            (void)s.read();
+            last = millis();
+        }
+        yield();
+    }
+}
+
 String dispenser_lib::sensors::rfid_sensor::read_rfid(uint32_t timeout_ms)
 {
     const uint32_t start = millis();
@@ -115,10 +129,13 @@ String dispenser_lib::sensors::rfid_sensor::read_rfid(uint32_t timeout_ms)
             uint8_t etx = (uint8_t)serial_port.read();
             if (etx != 0x03)
             {
+                drain_input(serial_port, 20);
                 return "";
             }
 
-            return String(tag);
+            String out(tag);
+            drain_input(serial_port, 20);
+            return out;
         }
         yield();
     }

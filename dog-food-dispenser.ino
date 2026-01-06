@@ -41,6 +41,8 @@ uint32_t manouk_last_fed_ms = 0;
 
 static const long FOOD_EMPTY_THRESHOLD_CM = 100;
 
+static volatile bool web_dispense_request = false;
+
 void IRAM_ATTR on_IR_falling()
 {
     uint32_t now = micros();
@@ -48,27 +50,6 @@ void IRAM_ATTR on_IR_falling()
         return;
     last_isr_us = now;
     ir_event = true;
-}
-
-String elapsed_to_human(uint32_t since_ms)
-{
-    if (since_ms == 0)
-        return "Jamais";
-
-    uint32_t sec = since_ms / 1000;
-    if (sec < 60)
-        return "Il y a " + String(sec) + " s";
-
-    uint32_t min = sec / 60;
-    if (min < 60)
-        return "Il y a " + String(min) + " min";
-
-    uint32_t h = min / 60;
-    if (h < 24)
-        return "Il y a " + String(h) + " h";
-
-    uint32_t d = h / 24;
-    return "Il y a " + String(d) + " j";
 }
 
 int food_percent_from_distance(long cm)
@@ -193,6 +174,30 @@ void handle_dog_detected()
     }
 }
 
+void web_dispense()
+{
+    last_distance_cm = ultrasonic_sensor.get_distance();
+    if (last_distance_cm >= FOOD_EMPTY_THRESHOLD_CM)
+    {
+        last_event = "Web dispense blocked (empty)";
+        lcd_screen.clear();
+        lcd_screen.display_message("No more food ...", 0, 0);
+        delay(500);
+        return;
+    }
+
+    last_event = "Web dispense";
+    lcd_screen.clear();
+    lcd_screen.display_message("Web dispense", 0, 0);
+    lcd_screen.display_message("Dispensing...", 1, 0);
+
+    servo_motor.open();
+    delay(2000);
+    servo_motor.close();
+
+    last_event = "Web dispense done";
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -268,23 +273,27 @@ void setup()
 
     server.on("/status", HTTP_GET, []()
               {
-    long dist = last_distance_cm;
-    int pct = food_percent_from_distance(dist);
+        uint32_t up = millis();
+        long dist = last_distance_cm;
+        int pct = food_percent_from_distance(dist);
 
-    uint32_t now = millis();
-    String jop_h = elapsed_to_human(jop_last_fed_ms ? (now - jop_last_fed_ms) : 0);
-    String man_h = elapsed_to_human(manouk_last_fed_ms ? (now - manouk_last_fed_ms) : 0);
+        String json = "{";
+        json += "\"event\":\"" + last_event + "\",";
+        json += "\"distance_cm\":" + String(dist) + ",";
+        json += "\"food_percent\":" + String(pct) + ",";
+        json += "\"last_rfid\":\"" + last_rfid + "\",";
+        json += "\"uptime_ms\":" + String(up) + ",";
+        json += "\"jop_last_fed_uptime_ms\":" + String(jop_last_fed_ms) + ",";
+        json += "\"manouk_last_fed_uptime_ms\":" + String(manouk_last_fed_ms);
+        json += "}";
+        server.send(200, "application/json; charset=utf-8", json); });
 
-    String json = "{";
-    json += "\"event\":\"" + last_event + "\",";
-    json += "\"distance_cm\":" + String(dist) + ",";
-    json += "\"food_percent\":" + String(pct) + ",";
-    json += "\"last_rfid\":\"" + last_rfid + "\",";
-    json += "\"jop_last_fed\":\"" + jop_h + "\",";
-    json += "\"manouk_last_fed\":\"" + man_h + "\"";
-    json += "}";
-
-    server.send(200, "application/json; charset=utf-8", json); });
+    server.on("/dispense", HTTP_POST, []()
+              {
+        noInterrupts();
+        web_dispense_request = true;
+        interrupts();
+        server.send(200, "text/plain; charset=utf-8", "ok"); });
 
     server.onNotFound([]()
                       { server.send(404, "text/plain; charset=utf-8", "404 - introuvable"); });
@@ -306,16 +315,30 @@ void loop()
         waiting_msg = true;
     }
 
-    if (!busy && ir_event)
+    if (!busy)
     {
-        noInterrupts();
-        ir_event = false;
-        interrupts();
+        if (web_dispense_request)
+        {
+            noInterrupts();
+            web_dispense_request = false;
+            interrupts();
 
-        busy = true;
-        waiting_msg = false;
-        handle_dog_detected();
-        busy = false;
+            busy = true;
+            waiting_msg = false;
+            web_dispense();
+            busy = false;
+        }
+        else if (ir_event)
+        {
+            noInterrupts();
+            ir_event = false;
+            interrupts();
+
+            busy = true;
+            waiting_msg = false;
+            handle_dog_detected();
+            busy = false;
+        }
     }
 
     yield();

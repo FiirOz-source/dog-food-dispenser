@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dog Food Dispenser</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --primary2: #357abd;
+            --bg: #0b1220;
+            --card: rgba(255, 255, 255, .95);
+            --muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(1200px 700px at 10% 10%, rgba(74, 144, 226, .35), transparent 60%),
+                radial-gradient(900px 600px at 90% 20%, rgba(34, 197, 94, .20), transparent 55%),
+                radial-gradient(900px 600px at 40% 90%, rgba(245, 158, 11, .18), transparent 55%),
+                var(--bg);
+        }
+
+        .container {
+            background: var(--card);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, .2);
+            padding: 32px;
+            max-width: 760px;
+            width: 100%;
+            text-align: center;
+            animation: fadeIn .5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f59e0b;
+        }
+
+        .dot.ok {
+            background: #16a34a;
+        }
+
+        .dot.bad {
+            background: #ef4444;
+        }
+
+        .grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+            text-align: left;
+        }
+
+        .info-item h2 {
+            font-size: 1.05em;
+            margin: 0 0 6px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info-item p {
+            font-size: 1.35em;
+            margin: 0;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .sub {
+            font-size: .95em;
+            color: var(--muted);
+            font-weight: 500;
+            margin-top: 6px;
+        }
+
+        .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .col {
+            flex: 1;
+            min-width: 220px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+            text-align: left;
+        }
+
+        .col h3 {
+            margin: 0 0 8px;
+            color: var(--primary);
+        }
+
+        .col p {
+            margin: 0;
+            color: #374151;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: .95em;
+            color: #374151;
+            word-break: break-all;
+        }
+
+        .btn {
+            margin-top: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 14px 22px;
+            font-size: 1.1em;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background-color .2s ease, transform .1s ease, opacity .2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+        }
+
+        .btn:hover {
+            background: var(--primary2);
+            transform: scale(1.02);
+        }
+
+        .btn:active {
+            transform: scale(.98);
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>Dog Food Dispenser</h1>
+            <div class="pill">
+                <span class="dot" id="dot"></span>
+                <span id="conn">Connexion…</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="info-item">
+                <h2>Quantité de croquettes restantes</h2>
+                <p><span id="remaining-kibble">—</span></p>
+                <div class="sub">Distance ultrason: <span id="distance">—</span> cm</div>
+            </div>
+
+            <div class="info-item">
+                <h2>État</h2>
+                <p id="event">—</p>
+                <div class="sub">Dernier RFID: <span class="mono" id="rfid">—</span></div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <h3>Jop</h3>
+                    <p id="dog1-last-fed">Dernière alimentation : —</p>
+                    <div class="sub" id="dog1-relative">—</div>
+                </div>
+                <div class="col">
+                    <h3>Manouk</h3>
+                    <p id="dog2-last-fed">Dernière alimentation : —</p>
+                    <div class="sub" id="dog2-relative">—</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" id="dispenseBtn" onclick="dispense()">
+            Distribuer des croquettes
+        </button>
+    </div>
+
+    <script>
+        const dot = document.getElementById('dot');
+        const conn = document.getElementById('conn');
+        const btn = document.getElementById('dispenseBtn');
+
+        function setConn(ok) {
+            dot.classList.remove('ok', 'bad');
+            dot.classList.add(ok ? 'ok' : 'bad');
+            conn.textContent = ok ? 'En ligne' : 'Hors ligne';
+            btn.disabled = !ok;
+        }
+
+        function formatDateFR(d) {
+            return d.toLocaleString('fr-FR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+
+        function formatRelative(ms) {
+            if (ms < 0) return "—";
+            const sec = Math.floor(ms / 1000);
+            if (sec < 60) return `Il y a ${sec} s`;
+            const min = Math.floor(sec / 60);
+            if (min < 60) return `Il y a ${min} min`;
+            const h = Math.floor(min / 60);
+            if (h < 24) return `Il y a ${h} h`;
+            const d = Math.floor(h / 24);
+            return `Il y a ${d} j`;
+        }
+
+        function dateFromUptime(uptimeMs, lastFedUptimeMs) {
+            if (!lastFedUptimeMs || lastFedUptimeMs <= 0) return null;
+            const elapsed = uptimeMs - lastFedUptimeMs;
+            if (elapsed < 0) return null;
+            return { date: new Date(Date.now() - elapsed), elapsed };
+        }
+
+        async function refresh() {
+            try {
+                const r = await fetch('/status', { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const s = await r.json();
+
+                const pct = (typeof s.food_percent === 'number' && s.food_percent >= 0) ? (s.food_percent + ' %') : '—';
+                document.getElementById('remaining-kibble').textContent = pct;
+
+                document.getElementById('distance').textContent = (typeof s.distance_cm === 'number') ? s.distance_cm : '—';
+                document.getElementById('event').textContent = s.event ?? '—';
+                document.getElementById('rfid').textContent = s.last_rfid ?? '—';
+
+                const up = s.uptime_ms ?? 0;
+
+                const j = dateFromUptime(up, s.jop_last_fed_uptime_ms);
+                if (j && j.date) {
+                    document.getElementById('dog1-last-fed').textContent = "Dernière alimentation : " + formatDateFR(j.date);
+                    document.getElementById('dog1-relative').textContent = formatRelative(j.elapsed);
+                } else {
+                    document.getElementById('dog1-last-fed').textContent = "Dernière alimentation : Jamais";
+                    document.getElementById('dog1-relative').textContent = "—";
+                }
+
+                const m = dateFromUptime(up, s.manouk_last_fed_uptime_ms);
+                if (m && m.date) {
+                    document.getElementById('dog2-last-fed').textContent = "Dernière alimentation : " + formatDateFR(m.date);
+                    document.getElementById('dog2-relative').textContent = formatRelative(m.elapsed);
+                } else {
+                    document.getElementById('dog2-last-fed').textContent = "Dernière alimentation : Jamais";
+                    document.getElementById('dog2-relative').textContent = "—";
+                }
+
+                setConn(true);
+            } catch (e) {
+                setConn(false);
+            }
+        }
+
+        async function dispense() {
+            if (!confirm("Déclencher une distribution de croquettes ?")) return;
+            btn.disabled = true;
+            try {
+                const r = await fetch('/dispense', { method: 'POST', cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+            } catch (e) {
+                alert("Erreur: impossible de contacter l'ESP");
+            } finally {
+                btn.disabled = false;
+                refresh();
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 1000);
+    </script>
+</body>
+
+</html>

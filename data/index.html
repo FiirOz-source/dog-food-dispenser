@@ -194,6 +194,59 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        .terminal {
+            margin-top: 18px;
+            text-align: left;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .12);
+            border: 1px solid rgba(17, 24, 39, .12);
+        }
+
+        .term-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #0f172a;
+            color: #e5e7eb;
+            font-weight: 800;
+        }
+
+        .term-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tbtn {
+            background: rgba(255, 255, 255, .08);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .tbtn:hover {
+            background: rgba(255, 255, 255, .14);
+        }
+
+        .logBox {
+            margin: 0;
+            padding: 12px;
+            background: #0b1220;
+            color: #d1d5db;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12.5px;
+            line-height: 1.35;
+            height: 220px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
 </head>
 
@@ -237,6 +290,18 @@
         <button class="btn" id="dispenseBtn" onclick="dispense()">
             Distribuer des croquettes
         </button>
+
+        <div class="terminal">
+            <div class="term-head">
+                <span>Logs</span>
+                <div class="term-actions">
+                    <button class="tbtn" id="pauseBtn">Pause</button>
+                    <button class="tbtn" id="clearBtn">Effacer</button>
+                </div>
+            </div>
+            <pre id="logBox" class="logBox"></pre>
+        </div>
+
     </div>
 
     <script>
@@ -276,6 +341,54 @@
             if (elapsed < 0) return null;
             return { date: new Date(Date.now() - elapsed), elapsed };
         }
+
+        const logBox = document.getElementById('logBox');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let logFrom = 0;
+        let paused = false;
+
+        pauseBtn.addEventListener('click', () => {
+            paused = !paused;
+            pauseBtn.textContent = paused ? 'Reprendre' : 'Pause';
+        });
+
+        clearBtn.addEventListener('click', () => {
+            logBox.textContent = '';
+        });
+
+        function appendLogs(lines) {
+            if (!lines || !lines.length) return;
+            const atBottom = (logBox.scrollTop + logBox.clientHeight) >= (logBox.scrollHeight - 5);
+
+            for (const l of lines) {
+                logBox.textContent += l + "\n";
+            }
+
+            if (!paused && atBottom) {
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+        }
+
+        refreshLogs();
+        setInterval(refreshLogs, 800);
+
+
+        async function refreshLogs() {
+            if (paused) return;
+
+            try {
+                const r = await fetch(`/logs?from=${logFrom}`, { cache: 'no-store' });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const data = await r.json();
+
+                appendLogs(data.entries);
+                logFrom = data.total ?? logFrom;
+            } catch (e) {
+            }
+        }
+
 
         async function refresh() {
             try {

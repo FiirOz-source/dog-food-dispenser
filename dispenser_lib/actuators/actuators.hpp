@@ -11,41 +11,17 @@
 #include <Wire.h>
 #include <Servo.h>
 #include <rgb_lcd.h>
-#include <stdexcept>
 
 namespace dispenser_lib
 {
     namespace actuators
     {
-        struct actuator_error : public std::runtime_error
-        {
-            using std::runtime_error::runtime_error;
-        };
-
-        struct not_initialized : public actuator_error
-        {
-            using actuator_error::actuator_error;
-        };
-
-        struct invalid_pin : public actuator_error
-        {
-            using actuator_error::actuator_error;
-        };
-
-        struct invalid_param : public actuator_error
-        {
-            using actuator_error::actuator_error;
-        };
-
         class actuator
         {
         public:
             actuator() = default;
             ~actuator() = default;
             virtual void init_actuator();
-
-        protected:
-            bool initialized = false;
         };
 
         class digital_actuator : public actuator

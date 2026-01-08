@@ -63,6 +63,8 @@ compile: core
 		--libraries "$(LIB_DIR)" \
 		--libraries "$(DISP_LIB_DIR)" \
 		--warnings all \
+		--build-property compiler.cpp.extra_flags=-fexceptions \
+		--build-property compiler.c.extra_flags=-fexceptions \
 		./
 
 upload: compile

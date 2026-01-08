@@ -12,17 +12,46 @@
 #include <Ultrasonic.h>
 #include <SoftwareSerial.h>
 #include <vector>
+#include <stdexcept>
 
 namespace dispenser_lib
 {
     namespace sensors
     {
+        struct sensor_error : public std::runtime_error
+        {
+            using std::runtime_error::runtime_error;
+        };
+
+        struct not_initialized : public sensor_error
+        {
+            using sensor_error::sensor_error;
+        };
+
+        struct invalid_pin : public sensor_error
+        {
+            using sensor_error::sensor_error;
+        };
+
+        struct rfid_timeout : public sensor_error
+        {
+            using sensor_error::sensor_error;
+        };
+
+        struct rfid_protocol_error : public sensor_error
+        {
+            using sensor_error::sensor_error;
+        };
+
         class sensor
         {
         public:
             sensor() = default;
             ~sensor() = default;
             virtual void init_sensor();
+
+        protected:
+            bool initialized = false;
         };
 
         class serial_sensor : public sensor
@@ -90,10 +119,6 @@ namespace dispenser_lib
             ~rfid_sensor() = default;
             void init_sensor() override;
             String read_rfid(uint32_t timeout_ms = 80);
-
-        private:
-            std::vector<char> frame;
-            bool in_frame = false;
         };
 
     } // namespace sensors

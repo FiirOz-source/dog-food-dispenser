@@ -14,10 +14,10 @@ ESP8266WebServer server(80);
 
 static const uint8_t SDA_PIN = 4;
 static const uint8_t SCL_PIN = 5;
-static const uint8_t SERVO_PIN = 14;
+static const uint8_t SERVO_PIN = 15;
 static const uint8_t ULTRASONIC_SENSOR_PIN = 12;
 static const uint8_t IR_PIN = 13;
-static const uint8_t RFID_RX_PIN = 15;
+static const uint8_t RFID_RX_PIN = 14;
 
 dispenser_lib::dogs::dog Jop("Jop", "0080D552");
 dispenser_lib::dogs::dog Manouk("Manouk", "002E2989");
@@ -200,6 +200,7 @@ void web_dispense()
 
 void setup()
 {
+    delay(100);
     Serial.begin(115200);
     delay(100);
 

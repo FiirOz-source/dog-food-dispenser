@@ -530,7 +530,7 @@ START (Mode normal)
       │ Back to ready     │
       └──────┬────────────┘
              │
-      └──→ Attendre prochain chien
+             └──→ Attendre prochain chien
 ```
 
 ---
@@ -571,52 +571,6 @@ L'interface web affiche :
 Le serveur web permet de lire les logs via une interface console. La page web affiche egalement la quantité de croquettes, les dernières dates de distribution de croquettes pour chaque chien, etc...
 Il est egalement possible de déclencher manuellement une distribution de croquettes via le bouton distribuer.
 
-
----
-
-### Interaction automatique via capteurs
-
-Le système fonctionne automatiquement selon cet ordre :
-
-#### 1. Détection d'un chien
-
-```
-Capteur infrarouge (GPIO 13) → Détecte la présence d'un chien
-```
-
-#### 2. Identification par RFID
-
-```
-Lecteur RFID (GPIO 14/RX) → Lit la puce RFID du collier
-```
-
-**Puces enregistrées :**
-- **Jop** : `0080D552`
-- **Manouk** : `002E2989`
-
-#### 3. Vérification de l'intervalle d'alimentation
-
-```
-Historique de distribution → Vérifier si le chien a mangé il y a < 12h
-```
-
-Si le chien n'a pas mangé depuis 12h, il reçoit de la nourriture.
-
-#### 4. Dispensing (Contrôle du servomoteur)
-
-```
-Servo motor (GPIO 15) → Ouvre le distributeur pendant 2 secondes
-                     → Ferme le distributeur
-```
-
-#### 5. Enregistrement de l'événement
-
-```
-Système de logs → Enregistre :
-                  - Heure précise (NTP)
-                  - Chien identifié
-                  - Niveau de stock restant
-```
 
 ---
 

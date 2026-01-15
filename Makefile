@@ -1,10 +1,15 @@
 PROJECT_NAME := dog-food-dispenser
 BUILD_DIR    := build
 
-# Port → à modifier selon OS
-# Mac/Linux : /dev/cu.usbserial-0001
-# Windows : COM3, COM4, etc.
-PORT         := /dev/cu.usbserial-0001
+# Port → override possible:
+#   make run-all PORT=/dev/cu.usbserial-A5069RR4
+# Mac/Linux : /dev/cu.usbserial* /dev/cu.SLAB_USBtoUART* /dev/cu.wchusbserial*
+# Linux     : /dev/ttyUSB* /dev/ttyACM*
+# Windows   : COM3, COM4, etc.
+PORT ?= $(shell ls /dev/cu.usbserial* /dev/cu.SLAB_USBtoUART* /dev/cu.wchusbserial* /dev/ttyUSB* /dev/ttyACM* 2>/dev/null | head -n 1)
+ifeq ($(strip $(PORT)),)
+  PORT := /dev/cu.usbserial-0001
+endif
 
 UPLOAD_BAUD  := 921600
 BAUD         := 115200
@@ -48,6 +53,31 @@ ESP8266_TOOLS_DIR := $(ARDUINO_DATA_DIR)/packages/esp8266/tools
 
 MKLITTLEFS := $(shell find "$(ESP8266_TOOLS_DIR)" -type f -name "mklittlefs*" 2>/dev/null | head -n 1)
 UPLOAD_PY  := $(shell find "$(ARDUINO_DATA_DIR)/packages/esp8266/hardware" -type f -path "*/tools/upload.py" 2>/dev/null | sort | tail -n 1)
+
+DOXYFILE ?= Doxyfile
+DOC_DIR  ?= docs
+
+.PHONY: docs docs-init docs-clean
+
+docs-init:
+	@command -v doxygen >/dev/null 2>&1 || { \
+		echo "Erreur: doxygen n'est pas installé. -> brew install doxygen"; exit 127; \
+	}
+	@test -f "$(DOXYFILE)" || doxygen -g $(DOXYFILE)
+	@echo "Assure-toi que ton Doxyfile contient au moins:"
+	@echo "  GENERATE_HTML = YES"
+	@echo "  OUTPUT_DIRECTORY = $(DOC_DIR)"
+	@echo "  HTML_OUTPUT = html"
+
+docs: docs-init
+	@mkdir -p "$(DOC_DIR)"
+	@doxygen "$(DOXYFILE)"
+	@echo "Documentation générée."
+	@echo "Ouvre: $(DOC_DIR)/html/index.html"
+	@echo "macOS: open $(DOC_DIR)/html/index.html"
+
+docs-clean:
+	rm -rf "$(DOC_DIR)"
 
 all: compile
 

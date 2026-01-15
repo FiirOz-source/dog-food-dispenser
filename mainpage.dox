@@ -1,0 +1,196 @@
+/**
+ * @mainpage Documentation - Automatic Dog Food Dispenser
+ *
+ * Welcome to the documentation for the ESP8266-based automatic dog food dispenser 
+ * system with RFID identification.
+ *
+ * @section overview Overview
+ *
+ * This project implements an intelligent and automated pet feeding system with the following features:
+ *
+ * - **RFID Identification**: Automatic dog recognition via RFID collars
+ * - **Motion Detection**: Infrared sensor to detect dog approach
+ * - **Food Level Monitoring**: Ultrasonic sensor to monitor food stocks
+ * - **Servo Motor**: Precise control of food dispensing
+ * - **LCD Display**: Real-time user interface
+ * - **Web Server**: REST API for remote monitoring and control
+ * - **Event Logging**: Complete history with timestamps
+ *
+ * @section architecture Complete Class Hierarchy
+ *
+ * @dot
+ * digraph class_hierarchy {
+ *     rankdir = TB;
+ *     node [shape=box, style=rounded];
+ *     
+ *     // Actuators hierarchy
+ *     actuator [label="<<abstract>>\nActuator", style="rounded,filled", fillcolor="#FFE6CC"];
+ *     digital_act [label="Digital Actuator"];
+ *     i2c_act [label="I2C Actuator"];
+ *     lcd [label="LCD Screen\n(I2C)"];
+ *     servo [label="Servo Motor\n(Digital)"];
+ *     
+ *     actuator -> digital_act;
+ *     actuator -> i2c_act;
+ *     digital_act -> servo;
+ *     i2c_act -> lcd;
+ *     
+ *     // Sensors hierarchy
+ *     sensor [label="<<abstract>>\nSensor", style="rounded,filled", fillcolor="#FFE6CC"];
+ *     digital_sens [label="Digital Sensor"];
+ *     serial_sens [label="Serial Sensor"];
+ *     ultrasonic [label="Ultrasonic Sensor\n(Distance)"];
+ *     infrared [label="Infrared Sensor\n(Motion)"];
+ *     rfid [label="RFID Sensor\n(Serial)"];
+ *     
+ *     sensor -> digital_sens;
+ *     sensor -> serial_sens;
+ *     digital_sens -> ultrasonic;
+ *     digital_sens -> infrared;
+ *     serial_sens -> rfid;
+ *     
+ *     // Dogs
+ *     dog [label="Dog Class\n(Jop, Manouk)", style="rounded,filled", fillcolor="#CCFFCC"];
+ *     
+ *     // Logs
+ *     logger [label="Logger\n(Event Logging)", style="rounded,filled", fillcolor="#CCCCFF"];
+ *     
+ *     // Dispenser (uses all components)
+ *     dispenser [label="Dispenser\n(Main Logic)", style="rounded,filled", fillcolor="#FFCCFF"];
+ *     
+ *     // WiFi Server
+ *     wifi [label="WiFi Server\n(REST API)", style="rounded,filled", fillcolor="#FFFFCC"];
+ *     
+ *     // Main system connections
+ *     dispenser -> servo;
+ *     dispenser -> lcd;
+ *     dispenser -> ultrasonic;
+ *     dispenser -> infrared;
+ *     dispenser -> rfid;
+ *     dispenser -> dog;
+ *     dispenser -> logger;
+ *     dispenser -> wifi;
+ *     
+ *     // Layout hints
+ *     {rank = same; ultrasonic; infrared; rfid;}
+ *     {rank = same; servo; lcd;}
+ * }
+ * @enddot
+ *
+ * @section modules Available Modules
+ *
+ * ### Actuators (dispenser_lib::actuators)
+ * 
+ * Control hardware output components:
+ * - @ref dispenser_lib::actuators::actuator "Abstract base class"
+ * - @ref dispenser_lib::actuators::digital_actuator "GPIO digital outputs"
+ * - @ref dispenser_lib::actuators::i2c_actuator "I2C communication"
+ * - @ref dispenser_lib::actuators::lcd_screen "RGB LCD screen over I2C"
+ * - @ref dispenser_lib::actuators::servo_motor "Servo motor for dispensing"
+ *
+ * ### Sensors (dispenser_lib::sensors)
+ * 
+ * Read incoming sensor data:
+ * - @ref dispenser_lib::sensors::sensor "Abstract base class"
+ * - @ref dispenser_lib::sensors::digital_sensor "GPIO digital inputs"
+ * - @ref dispenser_lib::sensors::serial_sensor "UART serial communication"
+ * - @ref dispenser_lib::sensors::ultrasonic_sensor "Ultrasonic sensor (food distance)"
+ * - @ref dispenser_lib::sensors::infrared_sensor "Infrared sensor (motion detection)"
+ * - @ref dispenser_lib::sensors::rfid_sensor "RFID reader (dog identification)"
+ *
+ * ### Dog Management (dispenser_lib::dogs)
+ * 
+ * Dog profiles and feeding history:
+ * - @ref dispenser_lib::dogs::dog "Dog profile with feeding history"
+ *
+ * ### Logging (dispenser_lib::logs)
+ * 
+ * Event logging with timestamps:
+ * - @ref dispenser_lib::logs::logger "Events with NTP timestamps"
+ *
+ * ### Main Logic (dispenser_lib::dispenser)
+ * 
+ * System orchestration:
+ * - @ref dispenser_lib::dispenser::handle_dog_detected "Auto detection and feeding"
+ * - @ref dispenser_lib::dispenser::web_dispense "Manual feeding via web API"
+ * - @ref dispenser_lib::dispenser::init_dispenser "Complete system initialization"
+ *
+ * ### Web Server (dispenser_lib::wifi_server)
+ * 
+ * REST API and synchronization:
+ * - @ref dispenser_lib::wifi_server::init_wifi_server "Web server and WiFi setup"
+ * - @ref dispenser_lib::wifi_server::init_time_ntp "NTP time synchronization"
+ *
+ * @section getting_started Quick Start
+ *
+ * ### Compilation and Flashing
+ *
+ * @code
+ * # Install tools (first time)
+ * make core
+ *
+ * # Compile and upload code
+ * make run-all
+ *
+ * # Generate documentation
+ * make docs
+ * @endcode
+ *
+ * ### API Usage
+ *
+ * @code
+ * // Read sensors
+ * long distance_mm = ultrasonic_sensor.get_distance();
+ * String rfid_tag = rfid_sensor.read_rfid(100);
+ *
+ * // Control servo
+ * servo_motor->open();   // Open dispenser
+ * delay(2000);
+ * servo_motor->close();  // Close dispenser
+ *
+ * // Logging
+ * app_log += "Important event";
+ *
+ * // LCD display
+ * lcd_screen->display_message("Hello Dog!", 0, 0);
+ * @endcode
+ *
+ * @section hardware Hardware Used
+ *
+ * | Component | Pin | Type |
+ * |-----------|-----|------|
+ * | Servo Motor | GPIO 15 | Digital Output |
+ * | LCD RGB (I2C) | GPIO 4/5 (SDA/SCL) | I2C |
+ * | Ultrasonic Sensor | GPIO 12 | Digital Input |
+ * | Infrared Sensor | GPIO 13 | Digital Input |
+ * | RFID Reader | GPIO 14 (RX) | UART Serial |
+ *
+ * @section features Features
+ *
+ * ✓ RFID identification of 2 dogs (Jop & Manouk)  
+ * ✓ Configurable feeding interval (12h default)  
+ * ✓ Food level detection (ultrasonic sensor)  
+ * ✓ Complete event history with timestamps  
+ * ✓ Web interface with REST API  
+ * ✓ NTP time synchronization  
+ * ✓ LCD real-time display  
+ * ✓ LittleFS file system for data storage  
+ *
+ * @section see_also See Also
+ *
+ * - @ref hierarchical "Graphical class hierarchy" (automatically generated)
+ * - @ref annotated "Complete list of classes"
+ * - @ref files "Source files"
+ * - @ref namespaces "Namespaces"
+ *
+ * @section version Version & Authors
+ *
+ * **Version:** 1.0  
+ * **Date:** 15 January 2026  
+ * **Authors:** Burgmeier Timothée & Louis-le-Denmat Raphaël
+ *
+ * @section license License
+ *
+ * This project is provided as an educational example.
+ *
+ */

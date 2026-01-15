@@ -5,10 +5,24 @@
  *********************************************************************/
 
 #include "actuators.hpp"
+#include <stdexcept>
 
 /* LCD Screen */
 dispenser_lib::actuators::lcd_screen::lcd_screen(int sda, int scl, unsigned long speed, int columns, int rows)
 {
+    if (sda < 0 || scl < 0)
+    {
+        throw std::invalid_argument("SDA and SCL pins must be non-negative");
+    }
+    if (columns <= 0 || rows <= 0)
+    {
+        throw std::invalid_argument("Columns and rows must be positive integers");
+    }
+    if (speed == 0)
+    {
+        throw std::invalid_argument("I2C speed cannot be zero");
+    }
+
     sda_pin = sda;
     scl_pin = scl;
     i2c_speed = speed;
@@ -32,6 +46,19 @@ void dispenser_lib::actuators::lcd_screen::init_actuator()
 
 void dispenser_lib::actuators::lcd_screen::display_message(const char *message, int row, int column)
 {
+    if (message == nullptr)
+    {
+        throw std::invalid_argument("Message pointer cannot be null");
+    }
+    if (row < 0 || row >= nbr_rows)
+    {
+        throw std::out_of_range("Row index out of range");
+    }
+    if (column < 0 || column >= nbr_columns)
+    {
+        throw std::out_of_range("Column index out of range");
+    }
+
     lcd.setCursor(column, row);
     lcd.print(message);
 }
@@ -44,6 +71,19 @@ void dispenser_lib::actuators::lcd_screen::clear()
 /* Servo Motor */
 dispenser_lib::actuators::servo_motor::servo_motor(int ctrl_pin, int closed_angle, int opened_angle)
 {
+    if (ctrl_pin < 0)
+    {
+        throw std::invalid_argument("Control pin must be non-negative");
+    }
+    if (closed_angle < 0 || closed_angle > 180)
+    {
+        throw std::out_of_range("Closed angle must be between 0 and 180 degrees");
+    }
+    if (opened_angle < 0 || opened_angle > 180)
+    {
+        throw std::out_of_range("Opened angle must be between 0 and 180 degrees");
+    }
+
     pin = ctrl_pin;
     close_angle = 2 * closed_angle;
     open_angle = 2 * opened_angle;

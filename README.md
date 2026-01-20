@@ -402,9 +402,9 @@ Voici ce qui se passe étape par étape quand un chien se présente au distribut
 │ Capteur Ultrasonique (GPIO 12) mesure la distance       │
 │ du bas du bac jusqu'aux croquettes                      │
 │                                                         │
-│ Distance < 200mm  → Bac presque plein  (OK)             │
-│ Distance 200-400mm → Bac à moitié    (ATTENTION)        │
-│ Distance > 400mm  → Bac presque vide  (ALERTE)          │
+│ Distance < 100mm  → Bac presque plein  (OK)             │
+│ Distance 100-1000mm → Bac à moitié    (ATTENTION)        │
+│ Distance > 1000mm  → Bac presque vide  (ALERTE)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -414,7 +414,7 @@ Voici ce qui se passe étape par étape quand un chien se présente au distribut
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ Le système attend une lecture RFID (GPIO 14 - RX)       │
-│ Timeout : 200ms pour lire le numéro de la puce          │
+│ Timeout : 100ms pour lire le numéro de la puce          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -440,10 +440,6 @@ Voici ce qui se passe étape par étape quand un chien se présente au distribut
 ┌─────────────────────────────────────────────────────────┐
 │ Calcul du temps écoulé depuis le dernier repas          │
 │                                                         │
-│ Horodatage actuel (NTP) : 2026-01-15 14:30:00           │
-│ Dernier repas de JOP   : 2026-01-15 02:15:00            │
-│ Temps écoulé           : 12h 15min (PEUT MANGER)        │
-│                                                         │
 │ Si < 12h : Refuser l'accès (protection pour les chiens) │
 │ Si ≥ 12h : Autoriser la distribution                    │
 └─────────────────────────────────────────────────────────┘
@@ -457,8 +453,8 @@ Voici ce qui se passe étape par étape quand un chien se présente au distribut
 ┌─────────────────────────────────────────────────────────┐
 │ Actionnement du servomoteur pour ouvrir le distributeur │
 │                                                         │
-│ Position fermée  (0°)   → GPIO 15 à 0ms                 │
-│ Position ouverte (45°)  → GPIO 15 à 2ms (pulse PWM)     │
+│ Position fermée  (0°)   → GPIO 15                       │
+│ Position ouverte (90°)  → GPIO 15                       │
 │ Durée ouverture : 2000ms (2 secondes)                   │
 │ Fermeture        : Retour à 0°                          │
 └─────────────────────────────────────────────────────────┘
@@ -507,7 +503,7 @@ START (Mode normal)
       └──────┬────────────┘
              │ OUI
       ┌──────↓───────┐
-      │ Read RFID    │ ← Essayer de lire la puce (200ms)
+      │ Read RFID    │ ← Essayer de lire la puce (100ms)
       └──────┬───────┘
              │ Tag trouvé?
       ┌──────↓──────────┐
@@ -662,19 +658,7 @@ lcd_screen->setRGB(255, 0, 0);  // Rouge
 
 ### Monitoring en temps réel
 
-Utilisez `make run-all` pour voir en direct tous les événements :
-
-```
-[10:25:34] WiFi connected - IP: 192.168.1.42
-[10:25:45] NTP time synced
-[10:26:12] IR sensor triggered
-[10:26:13] RFID detected: 0080D552 (Jop)
-[10:26:14] Jop eligible for feeding (last fed 14h ago)
-[10:26:15] Opening servo...
-[10:26:17] Closing servo (2000ms dispensed)
-[10:26:17] Event logged: Jop fed at 2026-01-15 10:26:17
-```
-
+Utilisez `make run-all` pour voir en direct tous les événements.
 Appuyez sur **Ctrl+C** pour arrêter le monitoring.
 
 ---

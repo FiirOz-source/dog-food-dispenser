@@ -1,61 +1,41 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <LittleFS.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
-const char *ssid = "iPhone de Timothée";
-const char *password = "TimAuThe";
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32 // Mets 64 si ton écran est en 128x64
 
-ESP8266WebServer server(80);
+// D1 --> Brancher le SCK
+// D2 --> Brancher le SDA
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 void setup()
 {
-    Serial.begin(115200);
-    delay(100);
+    // I2C sur ESP8266 (NodeMCU / D1 mini) : SDA=D2(GPIO4), SCL=D1(GPIO5)
+    Wire.begin(D2, D1);
 
-    // Wi-Fi
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-    Serial.print("Connexion");
-    while (WiFi.status() != WL_CONNECTED)
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
     {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("\nConnecté !");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-
-    // Filesystem
-    if (!LittleFS.begin())
-    {
-        Serial.println("Erreur LittleFS !");
-        return;
+        while (true)
+        {
+            delay(1000);
+        }
     }
 
-    // Sert index.html à la racine
-    server.on("/", HTTP_GET, []()
-              {
-    File f = LittleFS.open("/index.html", "r");
-    if (!f) {
-      server.send(500, "text/plain; charset=utf-8", "index.html introuvable dans LittleFS");
-      return;
-    }
-    server.streamFile(f, "text/html; charset=utf-8");
-    f.close(); });
+    display.clearDisplay();
 
-    // Sert tous les autres fichiers statiques (CSS/JS/images)
-    // Exemple : /style.css -> /style.css dans LittleFS
-    server.serveStatic("/", LittleFS, "/");
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
 
-    // 404
-    server.onNotFound([]()
-                      { server.send(404, "text/plain; charset=utf-8", "404 - introuvable"); });
+    display.println("Bonjour OLED !");
+    display.println("ESP8266 + SSD1306");
+    display.println("I2C OK :)");
 
-    server.begin();
-    Serial.println("Serveur OK.");
+    display.display();
 }
 
 void loop()
 {
-    server.handleClient();
 }

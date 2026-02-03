@@ -4,7 +4,7 @@ BUILD_DIR    := build
 # Port → à modifier selon OS
 # Mac/Linux : /dev/cu.usbserial-0001
 # Windows : COM3, COM4, etc.
-PORT         := /dev/cu.usbserial-0001
+PORT         := /dev/cu.usbserial-A5069RR4
 
 UPLOAD_BAUD  := 921600
 BAUD         := 115200

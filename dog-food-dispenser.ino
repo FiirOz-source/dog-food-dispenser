@@ -1,72 +1,38 @@
 #include <Arduino.h>
 
-const uint8_t PIN_TRIG = D5; // GPIO14
-const uint8_t PIN_ECHO = D6; // GPIO12
+const uint8_t PIN_IR = D7; // GPIO13
 
-float readDistanceCm(uint32_t timeout_us = 30000)
+bool irDetectedFiltered(uint8_t samples = 5, uint16_t gap_ms = 3)
 {
-    // Assure un TRIG bas stable
-    digitalWrite(PIN_TRIG, LOW);
-    delayMicroseconds(2);
-
-    // Impulsion TRIG de 10µs
-    digitalWrite(PIN_TRIG, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(PIN_TRIG, LOW);
-
-    // Mesure la durée du pulse HIGH sur ECHO
-    // timeout_us ~ 30000 -> ~5m max (aller-retour), mais en pratique HC-SR04 ~ 4m
-    uint32_t duration = pulseIn(PIN_ECHO, HIGH, timeout_us);
-
-    if (duration == 0)
+    uint8_t lowCount = 0;
+    for (uint8_t i = 0; i < samples; i++)
     {
-        // timeout -> pas de mesure valide
-        return -1.0f;
+        if (digitalRead(PIN_IR) == LOW)
+            lowCount++;
+        delay(gap_ms);
     }
-
-    // Distance = (durée_us * vitesse_du_son_cm/us) / 2
-    // vitesse du son ~ 343 m/s => 0.0343 cm/us
-    float distance = (duration * 0.0343f) / 2.0f;
-    return distance;
+    return lowCount > (samples / 2);
 }
 
 void setup()
 {
     Serial.begin(115200);
-    pinMode(PIN_TRIG, OUTPUT);
-    pinMode(PIN_ECHO, INPUT);
 
-    Serial.println("HC-SR04 + ESP8266 OK");
+    pinMode(PIN_IR, INPUT);
+
+    Serial.println("IR obstacle sensor ready");
 }
 
 void loop()
 {
-    // Petite moyenne sur 3 mesures pour stabiliser
-    float sum = 0;
-    int ok = 0;
+    bool detected = irDetectedFiltered();
 
-    for (int i = 0; i < 3; i++)
+    static bool last = false;
+    if (detected != last)
     {
-        float d = readDistanceCm();
-        if (d > 0)
-        {
-            sum += d;
-            ok++;
-        }
-        delay(50);
+        last = detected;
+        Serial.println(detected ? "OBSTACLE: DETECTED (OUT=LOW)" : "OBSTACLE: CLEAR (OUT=HIGH)");
     }
 
-    if (ok == 0)
-    {
-        Serial.println("Distance: (timeout)");
-    }
-    else
-    {
-        float avg = sum / ok;
-        Serial.print("Distance: ");
-        Serial.print(avg, 1);
-        Serial.println(" cm");
-    }
-
-    delay(200);
+    delay(50);
 }
